@@ -58,7 +58,7 @@ class IOUloss(nn.Module):
 
 
 class YOLOLoss(nn.Module):
-    def __init__(self, num_classes, fp16, strides=[8, 16, 32]):
+    def __init__(self, num_classes, fp16, strides=[4, 8, 16, 32]):
         super().__init__()
         self.num_classes = num_classes
         self.strides = strides

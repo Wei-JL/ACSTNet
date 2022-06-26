@@ -157,7 +157,7 @@ class CSPLayer(nn.Module):
 
 
 class CSPDarknet(nn.Module):
-    def __init__(self, dep_mul, wid_mul, out_features=("dark3", "dark4", "dark5"), depthwise=False, act="silu", ):
+    def __init__(self, dep_mul, wid_mul, out_features=("dark2", "dark3", "dark4", "dark5"), depthwise=False, act="silu", ):
         super().__init__()
         assert out_features, "please provide output features of Darknet"
         self.out_features = out_features

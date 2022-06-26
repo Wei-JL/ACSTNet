@@ -9,7 +9,7 @@ from .darknet import BaseConv, CSPDarknet, CSPLayer, DWConv
 
 
 class YOLOXHead(nn.Module):
-    def __init__(self, num_classes, width=1.0, in_channels=[256, 512, 1024], act="silu", depthwise=False, ):
+    def __init__(self, num_classes, width=1.0, in_channels=[128, 256, 512, 1024], act="silu", depthwise=False, ):
         super().__init__()
         Conv = DWConv if depthwise else BaseConv
 
@@ -46,9 +46,10 @@ class YOLOXHead(nn.Module):
     def forward(self, inputs):
         # ---------------------------------------------------#
         #   inputs输入
-        #   P3_out  80, 80, 256
-        #   P4_out  40, 40, 512
-        #   P5_out  20, 20, 1024
+        #   P2_out  160, 160, 64
+        #   P3_out  80, 80, 128
+        #   P4_out  40, 40, 256
+        #   P5_out  20, 20, 512
         # ---------------------------------------------------#
         outputs = []
         for k, x in enumerate(inputs):
@@ -62,6 +63,7 @@ class YOLOXHead(nn.Module):
             cls_feat = self.cls_convs[k](x)
             # ---------------------------------------------------#
             #   判断特征点所属的种类
+            #   160, 160, num_classes
             #   80, 80, num_classes
             #   40, 40, num_classes
             #   20, 20, num_classes
@@ -74,6 +76,7 @@ class YOLOXHead(nn.Module):
             reg_feat = self.reg_convs[k](x)
             # ---------------------------------------------------#
             #   特征点的回归系数
+            #   reg_pred 160, 160, 4
             #   reg_pred 80, 80, 4
             #   reg_pred 40, 40, 4
             #   reg_pred 20, 20, 4
@@ -81,6 +84,7 @@ class YOLOXHead(nn.Module):
             reg_output = self.reg_preds[k](reg_feat)
             # ---------------------------------------------------#
             #   判断特征点是否有对应的物体
+            #   obj_pred 160, 160, 1
             #   obj_pred 80, 80, 1
             #   obj_pred 40, 40, 1
             #   obj_pred 20, 20, 1
@@ -93,7 +97,7 @@ class YOLOXHead(nn.Module):
 
 
 class YOLOPAFPN(nn.Module):
-    def __init__(self, depth=1.0, width=1.0, in_features=("dark3", "dark4", "dark5"), in_channels=[256, 512, 1024],
+    def __init__(self, depth=1.0, width=1.0, in_features=("dark2", "dark3", "dark4", "dark5"), in_channels=[128, 256, 512, 1024],
                  depthwise=False, act="silu"):
         super().__init__()
         Conv = DWConv if depthwise else BaseConv
@@ -103,16 +107,16 @@ class YOLOPAFPN(nn.Module):
         self.upsample = nn.Upsample(scale_factor=2, mode="nearest")
 
         # -------------------------------------------#
-        #   20, 20, 1024 -> 20, 20, 512
+        #   20, 20, 512 -> 20, 20, 256
         # -------------------------------------------#
-        self.lateral_conv0 = BaseConv(int(in_channels[2] * width), int(in_channels[1] * width), 1, 1, act=act)
+        self.lateral_conv0 = BaseConv(int(in_channels[3] * width), int(in_channels[2] * width), 1, 1, act=act)
 
         # -------------------------------------------#
-        #   40, 40, 1024 -> 40, 40, 512
+        #   40, 40, 256 -> 40, 40, 256
         # -------------------------------------------#
         self.C3_p4 = CSPLayer(
-            int(2 * in_channels[1] * width),
-            int(in_channels[1] * width),
+            int(2 * in_channels[2] * width),
+            int(in_channels[2] * width),
             round(3 * depth),
             False,
             depthwise=depthwise,
@@ -120,13 +124,14 @@ class YOLOPAFPN(nn.Module):
         )
 
         # -------------------------------------------#
-        #   40, 40, 512 -> 40, 40, 256
+        #   40, 40, 128 -> 40, 40, 64
         # -------------------------------------------#
-        self.reduce_conv1 = BaseConv(int(in_channels[1] * width), int(in_channels[0] * width), 1, 1, act=act)
+        self.reduce_conv0 = BaseConv(int(in_channels[1] * width), int(in_channels[0] * width), 1, 1, act=act)
+
         # -------------------------------------------#
         #   80, 80, 512 -> 80, 80, 256
         # -------------------------------------------#
-        self.C3_p3 = CSPLayer(
+        self.C2_p2 = CSPLayer(
             int(2 * in_channels[0] * width),
             int(in_channels[0] * width),
             round(3 * depth),
@@ -136,13 +141,30 @@ class YOLOPAFPN(nn.Module):
         )
 
         # -------------------------------------------#
-        #   80, 80, 256 -> 40, 40, 256
+        #   40, 40, 256 -> 40, 40, 128
         # -------------------------------------------#
-        self.bu_conv2 = Conv(int(in_channels[0] * width), int(in_channels[0] * width), 3, 2, act=act)
+        self.reduce_conv1 = BaseConv(int(in_channels[2] * width), int(in_channels[1] * width), 1, 1, act=act)
         # -------------------------------------------#
-        #   40, 40, 256 -> 40, 40, 512
+        #   80, 80, 512 -> 80, 80, 256
         # -------------------------------------------#
-        self.C3_n3 = CSPLayer(
+        self.C3_p3 = CSPLayer(
+            int(2 * in_channels[1] * width),
+            int(in_channels[1] * width),
+            round(3 * depth),
+            False,
+            depthwise=depthwise,
+            act=act,
+        )
+
+        # -------------------------------------------#
+        #   160, 160, 64 -> 80, 80, 64
+        # -------------------------------------------#
+        self.bu_conv0 = Conv(int(in_channels[0] * width), int(in_channels[0] * width), 3, 2, act=act)
+
+        # -------------------------------------------#
+        #   80, 80, 128 -> 80, 80, 128
+        # -------------------------------------------#
+        self.C2_n2 = CSPLayer(
             int(2 * in_channels[0] * width),
             int(in_channels[1] * width),
             round(3 * depth),
@@ -152,13 +174,13 @@ class YOLOPAFPN(nn.Module):
         )
 
         # -------------------------------------------#
-        #   40, 40, 512 -> 20, 20, 512
+        #   80, 80, 256 -> 40, 40, 256
         # -------------------------------------------#
-        self.bu_conv1 = Conv(int(in_channels[1] * width), int(in_channels[1] * width), 3, 2, act=act)
+        self.bu_conv2 = Conv(int(in_channels[1] * width), int(in_channels[1] * width), 3, 2, act=act)
         # -------------------------------------------#
-        #   20, 20, 1024 -> 20, 20, 1024
+        #   40, 40, 256 -> 40, 40, 512
         # -------------------------------------------#
-        self.C3_n4 = CSPLayer(
+        self.C3_n3 = CSPLayer(
             int(2 * in_channels[1] * width),
             int(in_channels[2] * width),
             round(3 * depth),
@@ -167,71 +189,134 @@ class YOLOPAFPN(nn.Module):
             act=act,
         )
 
+        # -------------------------------------------#
+        #   40, 40, 512 -> 20, 20, 512
+        # -------------------------------------------#
+        self.bu_conv1 = Conv(int(in_channels[2] * width), int(in_channels[2] * width), 3, 2, act=act)
+        # -------------------------------------------#
+        #   20, 20, 1024 -> 20, 20, 1024
+        # -------------------------------------------#
+        self.C3_n4 = CSPLayer(
+            int(2 * in_channels[2] * width),
+            int(in_channels[3] * width),
+            round(3 * depth),
+            False,
+            depthwise=depthwise,
+            act=act,
+        )
+
+
+
     def forward(self, input):
         out_features = self.backbone.forward(input)
-        [feat1, feat2, feat3] = [out_features[f] for f in self.in_features]
+        [feat0, feat1, feat2, feat3] = [out_features[f] for f in self.in_features]
 
         # -------------------------------------------#
-        #   20, 20, 1024 -> 20, 20, 512
+        #   20, 20, 512 -> 20, 20, 256
         # -------------------------------------------#
         P5 = self.lateral_conv0(feat3)
+
         # -------------------------------------------#
-        #  20, 20, 512 -> 40, 40, 512
+        #  20, 20, 256 -> 40, 40, 256
         # -------------------------------------------#
         P5_upsample = self.upsample(P5)
+
         # -------------------------------------------#
-        #  40, 40, 512 + 40, 40, 512 -> 40, 40, 1024
+        #  40, 40, 256 + 40, 40, 256 -> 40, 40, 512
         # -------------------------------------------#
         P5_upsample = torch.cat([P5_upsample, feat2], 1)
-        # -------------------------------------------#
-        #   40, 40, 1024 -> 40, 40, 512
-        # -------------------------------------------#
-        P5_upsample = self.C3_p4(P5_upsample)
 
         # -------------------------------------------#
         #   40, 40, 512 -> 40, 40, 256
         # -------------------------------------------#
-        P4 = self.reduce_conv1(P5_upsample)
-        # -------------------------------------------#
-        #   40, 40, 256 -> 80, 80, 256
-        # -------------------------------------------#
-        P4_upsample = self.upsample(P4)
-        # -------------------------------------------#
-        #   80, 80, 256 + 80, 80, 256 -> 80, 80, 512
-        # -------------------------------------------#
-        P4_upsample = torch.cat([P4_upsample, feat1], 1)
-        # -------------------------------------------#
-        #   80, 80, 512 -> 80, 80, 256
-        # -------------------------------------------#
-        P3_out = self.C3_p3(P4_upsample)
+        P5_upsample = self.C3_p4(P5_upsample)
 
         # -------------------------------------------#
-        #   80, 80, 256 -> 40, 40, 256
+        #   40, 40, 256 -> 40, 40, 128
+        # -------------------------------------------#
+        P4 = self.reduce_conv1(P5_upsample)
+
+        # -------------------------------------------#
+        #   40, 40, 128 -> 80, 80, 128
+        # -------------------------------------------#
+        P4_upsample = self.upsample(P4)
+
+        # -------------------------------------------#
+        #   80, 80, 128 + 80, 80, 128 -> 80, 80, 256
+        # -------------------------------------------#
+        P4_upsample = torch.cat([P4_upsample, feat1], 1)
+
+        # -------------------------------------------#
+        #   80, 80, 256 -> 80, 80, 128
+        # -------------------------------------------#
+        P3_temp = self.C3_p3(P4_upsample)
+
+        # -------------------------------------------#
+        #   80, 80, 128 -> 80, 80, 64
+        # -------------------------------------------#
+        P2 = self.reduce_conv0(P3_temp)
+
+        # -------------------------------------------#
+        #   80, 80, 64 -> 160, 160, 64
+        # -------------------------------------------#
+        P2_upsample = self.upsample(P2)
+
+        # -------------------------------------------#
+        #   160, 160, 64 + 160, 160, 64 -> 160, 160, 128
+        # -------------------------------------------#
+        P2_upsample = torch.cat([P2_upsample, feat0], 1)
+
+        # -------------------------------------------#
+        #   160, 160, 128 -> 160, 160, 64
+        # -------------------------------------------#
+        P2_out = self.C2_p2(P2_upsample)
+
+        # -------------------------------------------#
+        #   160, 160, 64 -> 80, 80, 64
+        # -------------------------------------------#
+        P2_downsample = self.bu_conv0(P2_out)
+
+        # -------------------------------------------#
+        #   80, 80, 64 + 80, 80, 64 -> 80, 80, 128
+        # -------------------------------------------#
+        P2_downsample = torch.cat([P2_downsample, P2], 1)
+
+        # -------------------------------------------#
+        #   80, 80, 128 -> 80, 80, 128
+        # -------------------------------------------#
+        P3_out = self.C2_n2(P2_downsample)
+
+        # -------------------------------------------#
+        #   80, 80, 128 -> 40, 40, 128
         # -------------------------------------------#
         P3_downsample = self.bu_conv2(P3_out)
+
         # -------------------------------------------#
-        #   40, 40, 256 + 40, 40, 256 -> 40, 40, 512
+        #   40, 40, 128 + 40, 40, 128 -> 40, 40, 256
         # -------------------------------------------#
         P3_downsample = torch.cat([P3_downsample, P4], 1)
+
         # -------------------------------------------#
-        #   40, 40, 256 -> 40, 40, 512
+        #   40, 40, 256 -> 40, 40, 256
         # -------------------------------------------#
         P4_out = self.C3_n3(P3_downsample)
 
         # -------------------------------------------#
-        #   40, 40, 512 -> 20, 20, 512
+        #   40, 40, 256 -> 20, 20, 256
         # -------------------------------------------#
         P4_downsample = self.bu_conv1(P4_out)
+
         # -------------------------------------------#
-        #   20, 20, 512 + 20, 20, 512 -> 20, 20, 1024
+        #   20, 20, 256 + 20, 20, 256 -> 20, 20, 512
         # -------------------------------------------#
         P4_downsample = torch.cat([P4_downsample, P5], 1)
+
         # -------------------------------------------#
-        #   20, 20, 1024 -> 20, 20, 1024
+        #   20, 20, 512 -> 20, 20, 512
         # -------------------------------------------#
         P5_out = self.C3_n4(P4_downsample)
 
-        return (P3_out, P4_out, P5_out)
+        return P2_out, P3_out, P4_out, P5_out
 
 
 class YoloBody(nn.Module):
