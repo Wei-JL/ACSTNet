@@ -1,4 +1,0 @@
-overpass
-aircraft
-playground
-oiltank
