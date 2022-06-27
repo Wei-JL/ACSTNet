@@ -2,12 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 import math
-from copy import deepcopy
-from functools import partial
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from copy import deepcopy
+from functools import partial
 
 
 class IOUloss(nn.Module):

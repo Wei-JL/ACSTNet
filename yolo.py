@@ -28,7 +28,7 @@ class YOLO(object):
         #   如果出现shape不匹配，同时要注意训练时的model_path和classes_path参数的修改
         # --------------------------------------------------------------------------#
         "model_path": 'model_data/yolox_s.pth',
-        "classes_path": 'model_data/coco_classes.txt',
+        "classes_path": 'dataset/RSOD-Dataset/labels.txt',
         # ---------------------------------------------------------------------#
         #   输入图片的大小，必须为32的倍数。
         # ---------------------------------------------------------------------#

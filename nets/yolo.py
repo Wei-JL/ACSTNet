@@ -6,6 +6,10 @@ import torch
 import torch.nn as nn
 
 from .darknet import BaseConv, CSPDarknet, CSPLayer, DWConv
+from .attention import eca_block, cbam_block, eam_block, CA_Block
+
+
+attention_block = [eca_block, cbam_block, eam_block, CA_Block]
 
 
 class YOLOXHead(nn.Module):
@@ -97,12 +101,23 @@ class YOLOXHead(nn.Module):
 
 
 class YOLOPAFPN(nn.Module):
-    def __init__(self, depth=1.0, width=1.0, in_features=("dark2", "dark3", "dark4", "dark5"), in_channels=[128, 256, 512, 1024],
-                 depthwise=False, act="silu"):
+    def __init__(self, depth=1.0, width=1.0, in_features=("dark2", "dark3", "dark4", "dark5"),
+                 in_channels=[128, 256, 512, 1024],
+                 depthwise=False, act="silu", att_phi=3):
         super().__init__()
         Conv = DWConv if depthwise else BaseConv
         self.backbone = CSPDarknet(depth, width, depthwise=depthwise, act=act)
         self.in_features = in_features
+        self.att_phi = att_phi
+
+        if 1 <= self.att_phi <= 4:
+            self.csp4Up_att = attention_block[self.att_phi - 1](int(in_channels[2] * width))  # 256
+            self.csp3Up_att = attention_block[self.att_phi - 1](int(in_channels[1] * width))  # 128
+            self.csp2Up_att = attention_block[self.att_phi - 1](int(in_channels[0] * width))  # 64
+
+            self.csp4Down_att = attention_block[self.att_phi - 1](int(in_channels[2] * width))  # 256
+            self.csp3Down_att = attention_block[self.att_phi - 1](int(in_channels[1] * width))  # 128
+            # self.csp2Down_att = attention_block[self.att_phi - 1](int(in_channels[0] * width))  # 64
 
         self.upsample = nn.Upsample(scale_factor=2, mode="nearest")
 
@@ -205,8 +220,6 @@ class YOLOPAFPN(nn.Module):
             act=act,
         )
 
-
-
     def forward(self, input):
         out_features = self.backbone.forward(input)
         [feat0, feat1, feat2, feat3] = [out_features[f] for f in self.in_features]
@@ -230,6 +243,8 @@ class YOLOPAFPN(nn.Module):
         #   40, 40, 512 -> 40, 40, 256
         # -------------------------------------------#
         P5_upsample = self.C3_p4(P5_upsample)
+        if 1 <= self.att_phi <= 4:
+            P5_upsample = self.csp4Up_att(P5_upsample)
 
         # -------------------------------------------#
         #   40, 40, 256 -> 40, 40, 128
@@ -250,6 +265,8 @@ class YOLOPAFPN(nn.Module):
         #   80, 80, 256 -> 80, 80, 128
         # -------------------------------------------#
         P3_temp = self.C3_p3(P4_upsample)
+        if 1 <= self.att_phi <= 4:
+            P3_temp = self.csp3Up_att(P3_temp)
 
         # -------------------------------------------#
         #   80, 80, 128 -> 80, 80, 64
@@ -270,11 +287,14 @@ class YOLOPAFPN(nn.Module):
         #   160, 160, 128 -> 160, 160, 64
         # -------------------------------------------#
         P2_out = self.C2_p2(P2_upsample)
+        P2_att = P2_out.clone()
+        if 1 <= self.att_phi <= 4:
+            P2_att = self.csp2Up_att(P2_att)
 
         # -------------------------------------------#
         #   160, 160, 64 -> 80, 80, 64
         # -------------------------------------------#
-        P2_downsample = self.bu_conv0(P2_out)
+        P2_downsample = self.bu_conv0(P2_att)
 
         # -------------------------------------------#
         #   80, 80, 64 + 80, 80, 64 -> 80, 80, 128
@@ -285,11 +305,14 @@ class YOLOPAFPN(nn.Module):
         #   80, 80, 128 -> 80, 80, 128
         # -------------------------------------------#
         P3_out = self.C2_n2(P2_downsample)
+        P3_att = P3_out.clone()
+        if 1 <= self.att_phi <= 4:
+            P3_att = self.csp3Down_att(P3_att)
 
         # -------------------------------------------#
         #   80, 80, 128 -> 40, 40, 128
         # -------------------------------------------#
-        P3_downsample = self.bu_conv2(P3_out)
+        P3_downsample = self.bu_conv2(P3_att)
 
         # -------------------------------------------#
         #   40, 40, 128 + 40, 40, 128 -> 40, 40, 256
@@ -300,11 +323,14 @@ class YOLOPAFPN(nn.Module):
         #   40, 40, 256 -> 40, 40, 256
         # -------------------------------------------#
         P4_out = self.C3_n3(P3_downsample)
+        P4_att = P4_out.clone()
+        if 1 <= self.att_phi <= 4:
+            P4_att = self.csp4Down_att(P4_att)
 
         # -------------------------------------------#
         #   40, 40, 256 -> 20, 20, 256
         # -------------------------------------------#
-        P4_downsample = self.bu_conv1(P4_out)
+        P4_downsample = self.bu_conv1(P4_att)
 
         # -------------------------------------------#
         #   20, 20, 256 + 20, 20, 256 -> 20, 20, 512
