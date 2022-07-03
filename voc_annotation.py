@@ -17,7 +17,7 @@ annotation_mode = 0
 # -------------------------------------------------------------------#
 #   数据集标签信息
 # -------------------------------------------------------------------#
-classes_path = 'dataset/RSOD-Dataset/labels.txt'
+classes_path = 'dataset/FruitVOCData/labels.txt'
 # --------------------------------------------------------------------------------------------------------------------------------#
 #   all_data_percent用于指定(训练集+验证集)与测试集的比例，默认情况下 (训练集+验证集):测试集 = 9:1
 #   train_percent用于指定(训练集+验证集)中训练集与验证集的比例，默认情况下 训练集:验证集 = 9:1
@@ -29,7 +29,7 @@ train_percent = 0.85
 #   指向VOC数据集所在的文件夹
 #   默认指向根目录下的VOC数据集
 # -------------------------------------------------------#
-VOC_path = 'dataset/RSOD-Dataset'
+VOC_path = 'dataset/FruitVOCData'
 VOC_sets = [('train_xywh', 'train'), ('val_xywh', 'val')]
 classes, _ = get_classes(classes_path)
 

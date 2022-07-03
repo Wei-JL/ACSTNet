@@ -49,7 +49,7 @@ if __name__ == "__main__":
     #   test_interval和fps_image_path仅在mode='fps'有效
     # ----------------------------------------------------------------------------------------------------------#
     test_interval = 100
-    fps_image_path = "img/aircraft_57.jpg"
+    fps_image_path = "dataset/RSOD-Dataset/JPEGImages/oiltank_186.jpg"
     # -------------------------------------------------------------------------#
     #   dir_origin_path     指定了用于检测的图片的文件夹路径
     #   dir_save_path       指定了检测完图片的保存路径

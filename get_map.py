@@ -24,12 +24,12 @@ if __name__ == "__main__":
     #   map_mode为3代表仅仅计算VOC_map。
     #   map_mode为4代表利用COCO工具箱计算当前数据集的0.50:0.95map。需要获得预测结果、获得真实框后并安装pycocotools才行
     # -------------------------------------------------------------------------------------------------------------------#
-    map_mode = 0
+    map_mode = 4
     # --------------------------------------------------------------------------------------#
     #   此处的classes_path用于指定需要测量VOC_map的类别
     #   一般情况下与训练和预测所用的classes_path一致即可
     # --------------------------------------------------------------------------------------#
-    classes_path = 'dataset/RSOD-Dataset/labels.txt'
+    classes_path = 'dataset/FruitVOCData/labels.txt'
     # --------------------------------------------------------------------------------------#
     #   MINOVERLAP用于指定想要获得的mAP0.x，mAP0.x的意义是什么请同学们百度一下。
     #   比如计算mAP0.75，可以设定MINOVERLAP = 0.75。
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     #   指向VOC数据集所在的文件夹
     #   默认指向根目录下的VOC数据集
     # -------------------------------------------------------#
-    VOCdevkit_path = 'dataset/RSOD-Dataset'
+    VOCdevkit_path = 'dataset/FruitVOCData'
     # -------------------------------------------------------#
     #   结果输出的文件夹，默认为map_out
     # -------------------------------------------------------#
@@ -94,10 +94,10 @@ if __name__ == "__main__":
 
         print("Get predict result.")
         for image_id in tqdm(image_ids):
-            image_path = os.path.join(VOCdevkit_path, "JPEGImages/" + image_id + ".jpg")
+            image_path = os.path.join(VOCdevkit_path, "JPEGImages/" + image_id + ".png")
             image = Image.open(image_path)
             if map_vis:
-                image.save(os.path.join(map_out_path, "images-optional/" + image_id + ".jpg"))
+                image.save(os.path.join(map_out_path, "images-optional/" + image_id + ".png"))
             yolo.get_map_txt(image_id, image, class_names, map_out_path)
         print("Get predict result done.")
 

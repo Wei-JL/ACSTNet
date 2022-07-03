@@ -27,7 +27,7 @@ def getClsTxt(xmlDir, cls_txt):
 
 if __name__ == '__main__':
     set_cls = set()
-    xmlDir = "dataset/RSOD-Dataset/Annotations"
-    cls_txt = "dataset/RSOD-Dataset/labels.txt"
+    xmlDir = "dataset/FruitVOCData/Annotations"
+    cls_txt = "dataset/FruitVOCData/labels.txt"
 
     getClsTxt(xmlDir, cls_txt)

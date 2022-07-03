@@ -152,8 +152,8 @@ if __name__ == "__main__":
     #                       (当Freeze_Train=False时失效)
     # ------------------------------------------------------------------#
     Init_Epoch = 0
-    Freeze_Epoch = 30
-    Freeze_batch_size = 2
+    Freeze_Epoch = 45
+    Freeze_batch_size = 6
     # ------------------------------------------------------------------#
     #   解冻阶段训练参数
     #   此时模型的主干不被冻结了，特征提取网络会发生改变
@@ -163,8 +163,8 @@ if __name__ == "__main__":
     #                           Adam可以使用相对较小的UnFreeze_Epoch
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     # ------------------------------------------------------------------#
-    UnFreeze_Epoch = 40
-    Unfreeze_batch_size = 2
+    UnFreeze_Epoch = 60
+    Unfreeze_batch_size = 10
     # ------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
     #                   默认先冻结主干训练后解冻训练。
@@ -206,14 +206,14 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------#
     #   eval_flag       是否在训练时进行评估，评估对象为验证集
     #                   安装pycocotools库后，评估体验更佳。
-    #   eval_period     代表多少个epoch评估一次，不建议频繁的评估
+    #   eval_period_mAP     代表多少个epoch评估一次，不建议频繁的评估
     #                   评估需要消耗较多的时间，频繁评估会导致训练非常慢
     #   此处获得的mAP会与get_map.py获得的会有所不同，原因有二：
     #   （一）此处获得的mAP为验证集的mAP。
     #   （二）此处设置评估参数较为保守，目的是加快评估速度。
     # ------------------------------------------------------------------#
     eval_flag = True
-    eval_period = 10
+    eval_period_mAP = 10
     # ------------------------------------------------------------------#
     #   num_workers     用于设置是否使用多线程读取数据
     #                   开启后会加快数据读取速度，但是会占用更多内存
@@ -470,7 +470,7 @@ if __name__ == "__main__":
         # ----------------------#
         if local_rank == 0:
             eval_callback = EvalCallback(model, input_shape, class_names, num_classes, val_lines, log_dir, Cuda, \
-                                         eval_flag=eval_flag, period=eval_period)
+                                         eval_flag=eval_flag, period=eval_period_mAP)
         else:
             eval_callback = None
 
@@ -535,7 +535,7 @@ if __name__ == "__main__":
 
             fit_one_epoch(model_train, model, ema, yolo_loss, loss_history, eval_callback, optimizer, epoch, epoch_step,
                           epoch_step_val, gen, gen_val, UnFreeze_Epoch, Cuda, fp16, scaler, save_period, save_dir,
-                          local_rank)
+                          eval_period_mAP, local_rank)
 
             if distributed:
                 dist.barrier()

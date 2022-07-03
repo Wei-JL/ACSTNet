@@ -13,3 +13,4 @@ shapely
 numpy
 pandas
 terminaltables
+pycocotools
