@@ -12,7 +12,7 @@ def fit_one_epoch(model_train, model, ema, yolo_loss, loss_history, eval_callbac
     val_loss = 0
 
     if local_rank == 0:
-        print('Start Train')
+        print('=========  Start Train  ====>>>>>>>>>')
         pbar = tqdm(total=epoch_step, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
     model_train.train()
     for iteration, batch in enumerate(gen):
@@ -71,8 +71,8 @@ def fit_one_epoch(model_train, model, ema, yolo_loss, loss_history, eval_callbac
 
     if local_rank == 0:
         pbar.close()
-        print('Finish Train')
-        print('Start Validation')
+        print('=========  Finish Train  ====>>>>>>>>>')
+        print('=========  Start Validation  ====>>>>>>>>>')
         pbar = tqdm(total=epoch_step_val, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3)
 
     if ema:
@@ -109,7 +109,7 @@ def fit_one_epoch(model_train, model, ema, yolo_loss, loss_history, eval_callbac
 
     if local_rank == 0:
         pbar.close()
-        print('Finish Validation')
+        print('=========  Finish Validation  ====>>>>>>>>>')
         loss_history.append_loss(epoch + 1, loss / epoch_step, val_loss / epoch_step_val)
         eval_callback.on_epoch_end(epoch + 1, model_train_eval)
         print('Epoch:' + str(epoch + 1) + '/' + str(Epoch))
@@ -128,11 +128,11 @@ def fit_one_epoch(model_train, model, ema, yolo_loss, loss_history, eval_callbac
             epoch + 1, loss / epoch_step, val_loss / epoch_step_val)))
 
         if len(loss_history.val_loss) <= 1 or (val_loss / epoch_step_val) <= min(loss_history.val_loss):
-            print('Save best model to best_epoch_weights.pth')
+            print('=========  Save best model to best_epoch_weights.pth  ====>>>>>>>>>')
             torch.save(save_state_dict, os.path.join(save_dir, "best_epoch_weights.pth"))
             
         if (epoch + 1) % eval_period_mAP == 0 and eval_callback.maps[-1] == max(eval_callback.maps):
-            print('=========  Save best mAP model to best_mAP_weights.pth  ====>>>>>')
+            print('=========  Save best mAP model to best_mAP_weights.pth  ====>>>>>>>>>')
             torch.save(save_state_dict, os.path.join(save_dir, "best_mAP_weights.pth"))
 
         torch.save(save_state_dict, os.path.join(save_dir, "last_epoch_weights.pth"))
