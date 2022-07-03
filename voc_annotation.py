@@ -110,7 +110,8 @@ if __name__ == "__main__":
                              encoding='utf-8').read().strip().split()
             list_file = open('%s/%s.txt' % (VOC_path, train_val), 'w', encoding='utf-8')
             for image_id in image_ids:
-                list_file.write('%s/JPEGImages/' % (os.path.abspath(VOC_path)))
+                # list_file.write('%s/JPEGImages/' % (os.path.abspath(VOC_path)))  # 绝对路径
+                list_file.write('%s/JPEGImages/' % (VOC_path))  # 相对路径路径
 
                 convert_annotation(image_id, list_file)
                 list_file.write('\n')
