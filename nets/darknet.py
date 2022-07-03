@@ -4,6 +4,30 @@
 
 import torch
 from torch import nn
+from nets.swinnet import PatchEmbed, BasicLayer, PatchMerging
+
+
+def merge_singe(tensor, H=0, W=0, model="CSP"):
+    """
+    tensor: 经过dark后的中间量x, 经过swin后的中间量y
+    H: swin_y保存的高
+    W: swin_y保存的宽
+    """
+    if model == "CSP":
+        B, L, C = tensor.shape
+        assert L == H * W, "input feature has wrong size"
+
+        swin_y = tensor.transpose(1, 2).view(B, C, H, W)
+
+        return swin_y
+    elif model == "Swin":
+        # flatten: [B, C, H, W] -> [B, C, HW]
+        # transpose: [B, C, HW] -> [B, HW, C]
+        csp_x = tensor.flatten(2).transpose(1, 2)
+        return csp_x
+
+    else:
+        assert False, "模式不为<CSP> 或者 <Swin>"
 
 
 class SiLU(nn.Module):
@@ -157,7 +181,14 @@ class CSPLayer(nn.Module):
 
 
 class CSPDarknet(nn.Module):
-    def __init__(self, dep_mul, wid_mul, out_features=("dark2", "dark3", "dark4", "dark5"), depthwise=False, act="silu", ):
+    def __init__(self, dep_mul, wid_mul, out_features=("dark2", "dark3", "dark4", "dark5"), depthwise=False, act="silu",
+                 patch_size=4, in_chans=3, embed_dim=48,
+                 # depths=(2, 2, 6, 2), num_heads=(3, 6, 12, 24),
+                 depths=(6,), num_heads=(12,),
+                 window_size=7, mlp_ratio=4., qkv_bias=True,
+                 drop_rate=0., attn_drop_rate=0., drop_path_rate=0.1,
+                 norm_layer=nn.LayerNorm, patch_norm=True,
+                 use_checkpoint=False):
         super().__init__()
         assert out_features, "please provide output features of Darknet"
         self.out_features = out_features
@@ -184,6 +215,10 @@ class CSPDarknet(nn.Module):
             Conv(base_channels, base_channels * 2, 3, 2, act=act),
             CSPLayer(base_channels * 2, base_channels * 2, n=base_depth, depthwise=depthwise, act=act),
         )
+
+        self.cat_conv = Conv(base_channels * 2 + embed_dim, base_channels * 2, 1, 1, act=act)
+        self.cat_csp = CSPLayer((base_channels * 2 + embed_dim) * 2, base_channels * 4, n=base_depth,
+                                depthwise=depthwise, act=act)
 
         # -----------------------------------------------#
         #   完成卷积之后，160, 160, 128 -> 80, 80, 256
@@ -215,24 +250,106 @@ class CSPDarknet(nn.Module):
                      act=act),
         )
 
+        # swin transformer部分
+        # self.num_classes = num_classes
+        # embed_dim = wid_mul * embed_dim  # "s" 模型
+
+        self.num_layers = len(depths)
+        self.embed_dim = embed_dim
+        self.patch_norm = patch_norm
+        # stage4输出特征矩阵的channels
+        self.num_features = int(embed_dim * 2 ** (self.num_layers - 1))
+        self.mlp_ratio = mlp_ratio
+
+        # split image into non-overlapping patches
+        self.patch_embed = PatchEmbed(
+            patch_size=patch_size, in_c=in_chans, embed_dim=embed_dim,
+            norm_layer=norm_layer if self.patch_norm else None)
+        # self.pos_drop = nn.Dropout(p=drop_rate)
+
+        # stochastic depth
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule
+
+        # dim_list = [1, 1.5, 2, 2]
+        # build layers
+        # self.layers = nn.ModuleList()
+        # for i_layer in range(self.num_layers):
+        #     # 注意这里构建的stage和论文图中有些差异
+        #     # 这里的stage不包含该stage的patch_merging层，包含的是下个stage的
+        #     layers = BasicLayer(dim=int(embed_dim * 3 ** i_layer),
+        #                         depth=depths[i_layer],
+        #                         num_heads=num_heads[i_layer],
+        #                         window_size=window_size,
+        #                         mlp_ratio=self.mlp_ratio,
+        #                         qkv_bias=qkv_bias,
+        #                         drop=drop_rate,
+        #                         attn_drop=attn_drop_rate,
+        #                         drop_path=dpr[sum(depths[:i_layer]):sum(depths[:i_layer + 1])],
+        #                         norm_layer=norm_layer,
+        #                         # downsample=PatchMerging if (i_layer < self.num_layers - 1) else None,
+        #                         downsample=PatchMerging if (i_layer <= self.num_layers - 1) else None,
+        #                         use_checkpoint=use_checkpoint)
+
+        # self.layers = nn.ModuleList()
+        # for i_layer in range(self.num_layers):
+        # 注意这里构建的stage和论文图中有些差异
+        # 这里的stage不包含该stage的patch_merging层，包含的是下个stage的
+        i_layer = 0
+        self.layers = BasicLayer(dim=int(embed_dim * 3 ** i_layer),
+                                 depth=depths[i_layer],
+                                 num_heads=num_heads[i_layer],
+                                 window_size=window_size,
+                                 mlp_ratio=self.mlp_ratio,
+                                 qkv_bias=qkv_bias,
+                                 drop=drop_rate,
+                                 attn_drop=attn_drop_rate,
+                                 drop_path=dpr[sum(depths[:i_layer]):sum(depths[:i_layer + 1])],
+                                 norm_layer=norm_layer,
+                                 # downsample=PatchMerging if (i_layer < self.num_layers - 1) else None,
+                                 downsample=PatchMerging if (i_layer <= self.num_layers - 1) else None,
+                                 use_checkpoint=use_checkpoint)
+
+        # self.csp_swin = CSPLayer(embed_dim * 2, int(embed_dim * 1.5), n=base_depth * 3, depthwise=depthwise, act=act)
+
     def forward(self, x):
+        y, H, W = self.patch_embed(x)
+        conv_y = merge_singe(y, H, W, model="CSP")  # 转换为conv的维度
+        # -----------------------------------------------#
+        #   Patch Partition的输出为batch, 160*160, embed_dim
+        # -----------------------------------------------#
+
         outputs = {}
         x = self.stem(x)
         outputs["stem"] = x
+        # -----------------------------------------------#
+        #   dark2的输出为160, 160, 64，是一个有效特征层
+        # -----------------------------------------------#
         x = self.dark2(x)
         outputs["dark2"] = x
+        x = torch.cat([x, conv_y], dim=1)  # channel: 32+48
+        x = self.cat_conv(x)
+        # outputs["dark2"] = x
+
         # -----------------------------------------------#
-        #   dark3的输出为80, 80, 256，是一个有效特征层
+        #   dark3的输出为80, 80, 128，是一个有效特征层
         # -----------------------------------------------#
+        y, H, W = self.layers(y, H, W)
+        conv_y = merge_singe(y, H, W, model="CSP")
+
         x = self.dark3(x)
         outputs["dark3"] = x
+        x = torch.cat([x, conv_y], dim=1)
+        x = self.cat_csp(x)
+        # outputs["dark3"] = x
+
         # -----------------------------------------------#
-        #   dark4的输出为40, 40, 512，是一个有效特征层
+        #   dark4的输出为40, 40, 256，是一个有效特征层
         # -----------------------------------------------#
         x = self.dark4(x)
         outputs["dark4"] = x
+
         # -----------------------------------------------#
-        #   dark5的输出为20, 20, 1024，是一个有效特征层
+        #   dark5的输出为20, 20, 512，是一个有效特征层
         # -----------------------------------------------#
         x = self.dark5(x)
         outputs["dark5"] = x
