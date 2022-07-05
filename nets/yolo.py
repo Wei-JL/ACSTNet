@@ -7,9 +7,9 @@ import torch.nn as nn
 
 from .darknet import BaseConv, CSPDarknet, CSPLayer, DWConv
 from .attention import eca_block, cbam_block, eam_block, CA_Block
+from .ercs import ercs_block
 
-
-attention_block = [eca_block, cbam_block, eam_block, CA_Block]
+attention_block = [eca_block, cbam_block, eam_block, CA_Block, ercs_block]
 
 
 class YOLOXHead(nn.Module):
@@ -103,14 +103,14 @@ class YOLOXHead(nn.Module):
 class YOLOPAFPN(nn.Module):
     def __init__(self, depth=1.0, width=1.0, in_features=("dark2", "dark3", "dark4", "dark5"),
                  in_channels=[128, 256, 512, 1024],
-                 depthwise=False, act="silu", att_phi=3):
+                 depthwise=False, act="silu", att_phi=5):
         super().__init__()
         Conv = DWConv if depthwise else BaseConv
         self.backbone = CSPDarknet(depth, width, depthwise=depthwise, act=act)
         self.in_features = in_features
         self.att_phi = att_phi
 
-        if 1 <= self.att_phi <= 4:
+        if 1 <= self.att_phi <= 5:
             self.csp4Up_att = attention_block[self.att_phi - 1](int(in_channels[2] * width))  # 256
             self.csp3Up_att = attention_block[self.att_phi - 1](int(in_channels[1] * width))  # 128
             self.csp2Up_att = attention_block[self.att_phi - 1](int(in_channels[0] * width))  # 64
@@ -243,7 +243,7 @@ class YOLOPAFPN(nn.Module):
         #   40, 40, 512 -> 40, 40, 256
         # -------------------------------------------#
         P5_upsample = self.C3_p4(P5_upsample)
-        if 1 <= self.att_phi <= 4:
+        if 1 <= self.att_phi <= 5:
             P5_upsample = self.csp4Up_att(P5_upsample)
 
         # -------------------------------------------#
@@ -265,7 +265,7 @@ class YOLOPAFPN(nn.Module):
         #   80, 80, 256 -> 80, 80, 128
         # -------------------------------------------#
         P3_temp = self.C3_p3(P4_upsample)
-        if 1 <= self.att_phi <= 4:
+        if 1 <= self.att_phi <= 5:
             P3_temp = self.csp3Up_att(P3_temp)
 
         # -------------------------------------------#
@@ -288,7 +288,7 @@ class YOLOPAFPN(nn.Module):
         # -------------------------------------------#
         P2_out = self.C2_p2(P2_upsample)
         P2_att = P2_out.clone()
-        if 1 <= self.att_phi <= 4:
+        if 1 <= self.att_phi <= 5:
             P2_att = self.csp2Up_att(P2_att)
 
         # -------------------------------------------#
@@ -306,7 +306,7 @@ class YOLOPAFPN(nn.Module):
         # -------------------------------------------#
         P3_out = self.C2_n2(P2_downsample)
         P3_att = P3_out.clone()
-        if 1 <= self.att_phi <= 4:
+        if 1 <= self.att_phi <= 5:
             P3_att = self.csp3Down_att(P3_att)
 
         # -------------------------------------------#
@@ -324,7 +324,7 @@ class YOLOPAFPN(nn.Module):
         # -------------------------------------------#
         P4_out = self.C3_n3(P3_downsample)
         P4_att = P4_out.clone()
-        if 1 <= self.att_phi <= 4:
+        if 1 <= self.att_phi <= 5:
             P4_att = self.csp4Down_att(P4_att)
 
         # -------------------------------------------#
