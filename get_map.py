@@ -29,7 +29,7 @@ if __name__ == "__main__":
     #   此处的classes_path用于指定需要测量VOC_map的类别
     #   一般情况下与训练和预测所用的classes_path一致即可
     # --------------------------------------------------------------------------------------#
-    classes_path = 'dataset/RSOD-Dataset/labels.txt'
+    classes_path = 'dataset/DIOR_VOC/labels.txt'
     # --------------------------------------------------------------------------------------#
     #   MINOVERLAP用于指定想要获得的mAP0.x，mAP0.x的意义是什么请同学们百度一下。
     #   比如计算mAP0.75，可以设定MINOVERLAP = 0.75。
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     #   指向VOC数据集所在的文件夹
     #   默认指向根目录下的VOC数据集
     # -------------------------------------------------------#
-    VOCdevkit_path = 'dataset/RSOD-Dataset'
+    VOCdevkit_path = 'dataset/DIOR_VOC'
     # -------------------------------------------------------#
     #   结果输出的文件夹，默认为map_out
     # -------------------------------------------------------#
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     if not os.path.exists(os.path.join(map_out_path, 'detection-results')):
         os.makedirs(os.path.join(map_out_path, 'detection-results'))
     if not os.path.exists(os.path.join(map_out_path, 'images-optional')):
-        os.makedirs(os.path.join(map_out_path, 'images-optional'))
+        os.makedirs(os.path.join(map_out_path, 'images-optional')) 
 
     class_names, _ = get_classes(classes_path)
 
@@ -94,7 +94,8 @@ if __name__ == "__main__":
 
         print("Get predict result.")
         for image_id in tqdm(image_ids):
-            image_path = os.path.join(VOCdevkit_path, "JPEGImages/" + image_id + ".jpg")
+            # image_path = os.path.join(VOCdevkit_path, "JPEGImages/" + image_id + ".jpg")
+            image_path = os.path.join(VOCdevkit_path, "JPEGImages-trainval/" + image_id + ".jpg")
             image = Image.open(image_path)
             if map_vis:
                 image.save(os.path.join(map_out_path, "images-optional/" + image_id + ".jpg"))

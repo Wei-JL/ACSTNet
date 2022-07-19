@@ -67,7 +67,7 @@ if __name__ == "__main__":
     #   classes_path    指向model_data下的txt，与自己训练的数据集相关
     #                   训练前一定要修改classes_path，使其对应自己的数据集
     # ---------------------------------------------------------------------#
-    classes_path = 'dataset/RSOD-Dataset/labels.txt'
+    classes_path = 'dataset/DIOR_VOC/labels.txt'
     # ----------------------------------------------------------------------------------------------------------------------------#
     #   权值文件的下载请看README，可以通过网盘下载。模型的 预训练权重 对不同数据集是通用的，因为特征是通用的。
     #   模型的 预训练权重 比较重要的部分是 主干特征提取网络的权值部分，用于进行特征提取。
@@ -152,8 +152,8 @@ if __name__ == "__main__":
     #                       (当Freeze_Train=False时失效)
     # ------------------------------------------------------------------#
     Init_Epoch = 0
-    Freeze_Epoch = 45
-    Freeze_batch_size = 6
+    Freeze_Epoch = 70
+    Freeze_batch_size = 8
     # ------------------------------------------------------------------#
     #   解冻阶段训练参数
     #   此时模型的主干不被冻结了，特征提取网络会发生改变
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     #                           Adam可以使用相对较小的UnFreeze_Epoch
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     # ------------------------------------------------------------------#
-    UnFreeze_Epoch = 60
+    UnFreeze_Epoch = 85
     Unfreeze_batch_size = 10
     # ------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
@@ -224,8 +224,8 @@ if __name__ == "__main__":
     # ----------------------------------------------------#
     #   获得图片路径和标签
     # ----------------------------------------------------#
-    train_annotation_path = 'dataset/RSOD-Dataset/train_xywh.txt'
-    val_annotation_path = 'dataset/RSOD-Dataset/val_xywh.txt'
+    train_annotation_path = 'dataset/DIOR_VOC/train_xywh.txt'
+    val_annotation_path = 'dataset/DIOR_VOC/val_xywh.txt'
 
     # ------------------------------------------------------#
     #   设置用到的显卡

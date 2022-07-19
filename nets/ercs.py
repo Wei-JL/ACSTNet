@@ -24,7 +24,7 @@ class ChannelAttention(nn.Module):
         ya = self.conva(ya.squeeze(-1).transpose(-1, -2)).transpose(-1, -2)
 
         ym = self.max_pool(x)
-        ym = self.conva(ym.squeeze(-1).transpose(-1, -2))
+        ym = self.convm(ym.squeeze(-1).transpose(-1, -2))
 
         y = torch.matmul(ya, ym)  # 矩阵相乘尺寸c*c
 
@@ -44,10 +44,12 @@ class SpatialAttention(nn.Module):
         self.gelu = nn.GELU()
 
     def forward(self, x):
+        residual = x
         avg_out = torch.mean(x, dim=1, keepdim=True)
         max_out, _ = torch.max(x, dim=1, keepdim=True)
         x = torch.cat([avg_out, max_out], dim=1)
         x = self.conv(x)
+        x = x * residual
         return self.gelu(x)
 
 
