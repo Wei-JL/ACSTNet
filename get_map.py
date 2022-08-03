@@ -92,7 +92,7 @@ if __name__ == "__main__":
         yolo = YOLO(confidence=confidence, nms_iou=nms_iou)
         print("Load model done.")
 
-        print("Get predict result.")
+        print("Get predict resultGT.")
         for image_id in tqdm(image_ids):
             # image_path = os.path.join(VOCdevkit_path, "JPEGImages/" + image_id + ".jpg")
             image_path = os.path.join(VOCdevkit_path, "JPEGImages-trainval/" + image_id + ".jpg")
@@ -100,10 +100,10 @@ if __name__ == "__main__":
             if map_vis:
                 image.save(os.path.join(map_out_path, "images-optional/" + image_id + ".jpg"))
             yolo.get_map_txt(image_id, image, class_names, map_out_path)
-        print("Get predict result done.")
+        print("Get predict resultGT done.")
 
     if map_mode == 0 or map_mode == 2:
-        print("Get ground truth result.")
+        print("Get ground truth resultGT.")
         for image_id in tqdm(image_ids):
             with open(os.path.join(map_out_path, "ground-truth/" + image_id + ".txt"), "w") as new_f:
                 root = ET.parse(os.path.join(VOCdevkit_path, "Annotations/" + image_id + ".xml")).getroot()
@@ -126,7 +126,7 @@ if __name__ == "__main__":
                         new_f.write("%s %s %s %s %s difficult\n" % (obj_name, left, top, right, bottom))
                     else:
                         new_f.write("%s %s %s %s %s\n" % (obj_name, left, top, right, bottom))
-        print("Get ground truth result done.")
+        print("Get ground truth resultGT done.")
 
     if map_mode == 0 or map_mode == 3:
         print("Get map.")

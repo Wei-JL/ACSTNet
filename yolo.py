@@ -27,7 +27,7 @@ class YOLO(object):
         #   验证集损失较低不代表mAP较高，仅代表该权值在验证集上泛化性能较好。
         #   如果出现shape不匹配，同时要注意训练时的model_path和classes_path参数的修改
         # --------------------------------------------------------------------------#
-        "model_path": 'logs/best_mAP_weights.pth',
+        "model_path": 'model_data/best_mAP_weights.pth',
         "classes_path": 'dataset/DIOR_VOC/labels.txt',
         # ---------------------------------------------------------------------#
         #   输入图片的大小，必须为32的倍数。

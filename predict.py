@@ -3,8 +3,9 @@
 #   整合到了一个py文件中，通过指定mode进行模式的修改。
 # -----------------------------------------------------------------------#
 import time
-
+import os
 import cv2
+
 import numpy as np
 from PIL import Image
 
@@ -22,6 +23,13 @@ if __name__ == "__main__":
     #   'export_onnx'       表示将模型导出为onnx，需要pytorch1.7.1以上。
     # ----------------------------------------------------------------------------------------------------------#
     mode = "predict"
+    # mode = "heatmap"
+    # -------------------------------------------------------------------------#
+    # save_bool      是否保存预测结果图片
+    # save_img_dir   保存图片路径
+    # -------------------------------------------------------------------------#
+    save_bool = True
+    save_img_dir = "TestIMG\output"
     # -------------------------------------------------------------------------#
     #   crop                指定了是否在单张图片预测后对目标进行截取
     #   count               指定了是否进行目标的计数
@@ -49,14 +57,14 @@ if __name__ == "__main__":
     #   test_interval和fps_image_path仅在mode='fps'有效
     # ----------------------------------------------------------------------------------------------------------#
     test_interval = 100
-    fps_image_path = "dataset/RSOD-Dataset/JPEGImages/oiltank_186.jpg"
+    fps_image_path = "TestIMG/DIOR_IMG/test11974.jpg"
     # -------------------------------------------------------------------------#
     #   dir_origin_path     指定了用于检测的图片的文件夹路径
     #   dir_save_path       指定了检测完图片的保存路径
     #   
     #   dir_origin_path和dir_save_path仅在mode='dir_predict'时有效
     # -------------------------------------------------------------------------#
-    dir_origin_path = "img/"
+    dir_origin_path = "TestIMG/RSOD_IMG/"
     dir_save_path = "img_out/"
     # -------------------------------------------------------------------------#
     #   heatmap_save_path   热力图的保存路径，默认保存在model_data下
@@ -73,7 +81,7 @@ if __name__ == "__main__":
 
     if mode == "predict":
         '''
-        1、如果想要进行检测完的图片的保存，利用r_image.save("img.jpg")即可保存，直接在predict.py里进行修改即可。 
+        1、如果想要进行检测完的图片的保存，利用r_image.save("RSOD_IMG.jpg")即可保存，直接在predict.py里进行修改即可。 
         2、如果想要获得预测框的坐标，可以进入yolo.detect_image函数，在绘图部分读取top，left，bottom，right这四个值。
         3、如果想要利用预测框截取下目标，可以进入yolo.detect_image函数，在绘图部分利用获取到的top，left，bottom，right这四个值
         在原图上利用矩阵的方式进行截取。
@@ -89,6 +97,11 @@ if __name__ == "__main__":
                 continue
             else:
                 r_image = yolo.detect_image(image, crop=crop, count=count)
+                if save_bool:
+                    os.makedirs(save_img_dir, exist_ok=True)
+                    img_name = os.path.basename(img)
+                    img_path = os.path.join(save_img_dir, img_name)
+                    r_image.save(img_path)
                 r_image.show()
 
     elif mode == "video":
@@ -103,7 +116,7 @@ if __name__ == "__main__":
             raise ValueError("未能正确读取摄像头（视频），请注意是否正确安装摄像头（是否正确填写视频路径）。")
 
         fps = 0.0
-        while (True):
+        while True:
             t1 = time.time()
             # 读取某一帧
             ref, frame = capture.read()
@@ -119,7 +132,7 @@ if __name__ == "__main__":
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
             fps = (fps + (1. / (time.time() - t1))) / 2
-            print("fps= %.2f" % (fps))
+            print("fps= %.2f" % fps)
             frame = cv2.putText(frame, "fps= %.2f" % (fps), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
             cv2.imshow("video", frame)

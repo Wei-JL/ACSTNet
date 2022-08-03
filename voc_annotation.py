@@ -24,13 +24,13 @@ classes_path = 'dataset/RSOD-Dataset/labels.txt'
 #   仅在annotation_mode为0和1的时候有效
 # --------------------------------------------------------------------------------------------------------------------------------#
 all_data_percent = 1
-train_percent = 0.85
+train_percent = 0.9
 # -------------------------------------------------------#
 #   指向VOC数据集所在的文件夹
 #   默认指向根目录下的VOC数据集
 # -------------------------------------------------------#
 VOC_path = 'dataset/RSOD-Dataset'
-VOC_sets = [('train_xywh', 'train'), ('val_xywh', 'val')]
+VOC_sets = [('train_xywh', 'train'), ('val_xywh', 'val'), ('test_xywh', 'test')]
 classes, _ = get_classes(classes_path)
 
 
