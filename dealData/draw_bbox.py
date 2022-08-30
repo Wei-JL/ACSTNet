@@ -100,7 +100,7 @@ if __name__ == '__main__':
                 txt_line = txt_line.replace("\n", "")
                 # classes_path = "dataset/DIOR_VOC/labels.txt"
                 # save_img_dir = "TestIMG/DIOR_IMG/resultGT"
-                classes_path = "dataset/RSOD-Dataset/labels.txt"
+                classes_path = "../dataset/RSOD-Dataset/labels.txt"
                 save_img_dir = "TestIMG/RSOD_IMG/resultGT"
                 class_names, num_classes = get_classes(classes_path)
                 count_label(txt_line, class_names, save_img_dir)

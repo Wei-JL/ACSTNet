@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # -------------------------------------------------------#
     map_out_path = 'map_out'
 
-    image_ids = open(os.path.join(VOCdevkit_path, "ImageSets/Main/val.txt")).read().strip().split()
+    image_ids = open(os.path.join(VOCdevkit_path, "ImageSets/Main/test.txt")).read().strip().split()
 
     if not os.path.exists(map_out_path):
         os.makedirs(map_out_path)
@@ -95,7 +95,8 @@ if __name__ == "__main__":
         print("Get predict resultGT.")
         for image_id in tqdm(image_ids):
             # image_path = os.path.join(VOCdevkit_path, "JPEGImages/" + image_id + ".jpg")
-            image_path = os.path.join(VOCdevkit_path, "JPEGImages-trainval/" + image_id + ".jpg")
+            # image_path = os.path.join(VOCdevkit_path, "JPEGImages-trainval/" + image_id + ".jpg")
+            image_path = os.path.join(VOCdevkit_path, "JPEGImages-test/" + image_id + ".jpg")
             image = Image.open(image_path)
             if map_vis:
                 image.save(os.path.join(map_out_path, "images-optional/" + image_id + ".jpg"))

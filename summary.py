@@ -9,8 +9,8 @@ from nets.yolo import YoloBody
 
 if __name__ == "__main__":
     input_shape = [640, 640]
-    num_classes = 80
-    phi = 'l'
+    num_classes = 20
+    phi = 's'
 
     # 需要使用device来指定网络在GPU还是CPU运行
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

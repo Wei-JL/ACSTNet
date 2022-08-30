@@ -29,6 +29,9 @@ class YOLO(object):
         # --------------------------------------------------------------------------#
         "model_path": 'model_data/best_mAP_weights.pth',
         "classes_path": 'dataset/DIOR_VOC/labels.txt',
+        # "model_path": 'model_data/best_mAP_weights_RSOD_A.pth',
+        # "classes_path": 'dataset/RSOD-Dataset/labels.txt',
+
         # ---------------------------------------------------------------------#
         #   输入图片的大小，必须为32的倍数。
         # ---------------------------------------------------------------------#

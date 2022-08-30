@@ -5,6 +5,8 @@ import operator
 import os
 import shutil
 import sys
+import csv
+
 
 try:
     from pycocotools.coco import COCO
@@ -327,6 +329,7 @@ def get_map(MINOVERLAP, draw_plot, score_threhold=0.5, path='./map_out'):
         except:
             pass
         os.makedirs(os.path.join(RESULTS_FILES_PATH, "AP"))
+        os.makedirs(os.path.join(RESULTS_FILES_PATH, "CSV"))
         os.makedirs(os.path.join(RESULTS_FILES_PATH, "F1"))
         os.makedirs(os.path.join(RESULTS_FILES_PATH, "Recall"))
         os.makedirs(os.path.join(RESULTS_FILES_PATH, "Precision"))
@@ -640,6 +643,13 @@ def get_map(MINOVERLAP, draw_plot, score_threhold=0.5, path='./map_out'):
                 area_under_curve_x = mrec[:-1] + [mrec[-2]] + [mrec[-1]]
                 area_under_curve_y = mprec[:-1] + [0.0] + [mprec[-1]]
                 plt.fill_between(area_under_curve_x, 0, area_under_curve_y, alpha=0.2, edgecolor='r')
+
+                rows = zip(area_under_curve_x, area_under_curve_y)
+                filePath = os.path.join(RESULTS_FILES_PATH, "CSV", class_name + ".csv")
+                with open(filePath, "w", newline='') as f:
+                    writer = csv.writer(f)
+                    for row in rows:
+                        writer.writerow(row)
 
                 fig = plt.gcf()
                 fig.canvas.set_window_title('AP ' + class_name)

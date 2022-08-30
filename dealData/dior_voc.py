@@ -15,7 +15,7 @@ annotation_mode = 0
 #   数据集标签信息
 # -------------------------------------------------------------------#
 xmlDir = "dataset/DIOR_VOC/Annotations"
-classes_path = 'dataset/DIOR_VOC/labels.txt'
+classes_path = '../dataset/DIOR_VOC/labels.txt'
 # -------------------------------------------------------#
 #   指向VOC数据集所在的文件夹
 #   默认指向根目录下的VOC数据集
@@ -23,7 +23,7 @@ classes_path = 'dataset/DIOR_VOC/labels.txt'
 set_cls = set()
 xmlDir = "dataset/DIOR_VOC/Annotations"
 cls_txt = "dataset/DIOR_VOC/labels.txt"
-VOC_path = 'dataset/DIOR_VOC'
+VOC_path = '../dataset/DIOR_VOC'
 VOC_sets = [('train_xywh', 'train'), ('val_xywh', 'val'), ('test_xywh', 'test')]
 
 
