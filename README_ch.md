@@ -50,6 +50,7 @@ pip install -r requirements.txt
 
 
 ## 4.训练步骤
+
 ### 训练RSOD数据集
 1. 数据集的准备   
     **本文使用VOC格式进行训练，将文件放在：ACSTNet/dataset/RSOD-Dataset 路径下**
@@ -64,7 +65,9 @@ pip install -r requirements.txt
   python train.py
   ```
 
-​     
+     ## 5.评估步骤 
+
+
 
 4. 训练结果预测   
     训练结果预测需要用到两个文件，分别是yolo.py和predict.py。我们首先需要去yolo.py里面修改model_path以及classes_path，这两个参数必须要修改。   
@@ -78,7 +81,7 @@ pip install -r requirements.txt
 
 ​     
 
-## 5.评估步骤 
+## 6.评估步骤 
 ### 评估RSOD的测试集
 1. 本文使用VOC格式进行评估。RSOD已经划分好了测试集，它的路径在:dataset/RSOD-Dataset/test_xywh.txt.
 2. 在yolo.py里面修改model_path以及classes_path。**model_path指向训练好的权值文件，在logs文件夹里。classes_path指向检测类别所对应的txt。**  
