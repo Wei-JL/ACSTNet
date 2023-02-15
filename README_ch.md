@@ -65,9 +65,6 @@ pip install -r requirements.txt
   python train.py
   ```
 
-     ## 5.评估步骤 
-
-
 
 4. 训练结果预测   
     训练结果预测需要用到两个文件，分别是yolo.py和predict.py。我们首先需要去yolo.py里面修改model_path以及classes_path，这两个参数必须要修改。   

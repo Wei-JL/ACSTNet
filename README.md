@@ -2,7 +2,7 @@
 
 ---
 
-## 目录
+## Catalog
 1. [Environment](#所需环境)
 
 2. [Achievement](#实现的内容)
@@ -49,12 +49,12 @@ Link: https://drive.google.com/drive/folders/1cF7GUiqjay0WJ-lElzG-MrHZHpY3kuQu?u
 
 ### Training RSOD dataset.
 
-1. **Preparation of the data set **
+1. Preparation of the data set
    First download the RSOD dataset, then use the VOC format for training and place the file under the path: ACSTNet/dataset/RSOD-Dataset
 
-2. **Modify the parameters needed for training   **
+2. Modify the parameters needed for training 
 
-3. **Start training **
+3. Start training
 
   ```python
 python train.py
@@ -76,7 +76,7 @@ Once you have completed the changes you can run predict.py for testing.
 ​     
 
 ## 6.Eval 
-### 评估RSOD的测试集
+### Evaluation of RSOD test sets
 1. This paper uses the VOC format for evaluation. RSOD has divided the test set and its path is at:dataset/RSOD-Dataset/test_xywh.txt.
 2. Modify model_path as well as classes_path inside yolo.py. **model_path points to the trained weights file, in the logs folder. classes_path points to the txt corresponding to the detected category.** 
 3. The evaluation results can be obtained by running get_map.py, and the evaluation results will be saved in the map_out folder.
